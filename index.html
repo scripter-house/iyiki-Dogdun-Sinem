@@ -199,7 +199,7 @@ canvas{
     z-index:1;
 }
 
-/* Yazı */
+/* Yazı Alanı */
 #message{
     position:fixed;
     inset:0;
@@ -226,11 +226,53 @@ canvas{
 }
 
 #message p{
-    margin-top:20px;
+    margin-top:15px;
     color:#ffd1e3;
-    font-size:clamp(16px,4vw,28px);
-    line-height:1.6;
+    font-size:clamp(16px,4vw,24px);
+    line-height:1.5;
     max-width:700px;
+}
+
+/* Dinamik Sayaç Kutusu */
+.counter-box {
+    margin-top: 25px;
+    background: rgba(255, 0, 110, 0.1);
+    border: 1px solid rgba(255, 0, 110, 0.3);
+    padding: 15px 30px;
+    border-radius: 15px;
+    box-shadow: 0 0 15px rgba(255, 0, 110, 0.2);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+}
+
+.counter-title {
+    color: #ff85c2;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+    font-weight: bold;
+}
+
+.counter-time {
+    color: #fff;
+    font-size: clamp(18px, 4.5vw, 32px);
+    font-weight: bold;
+    letter-spacing: 1px;
+    text-shadow: 0 0 10px rgba(255,255,255,0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.counter-unit {
+    color: #ff4d9d;
+    font-size: clamp(12px, 3vw, 16px);
+    font-weight: normal;
+    margin-right: 6px;
+    margin-left: 2px;
 }
 
 @keyframes heartBeat{
@@ -270,6 +312,11 @@ canvas{
     #message p{
         padding:0 10px;
     }
+    
+    .counter-box {
+        padding: 10px 15px;
+        margin-top: 20px;
+    }
 }
 
 </style>
@@ -306,6 +353,12 @@ canvas{
         Hayatında hep mutluluk, huzur ve güzel anılar olsun...<br>
         İyi ki varsın 🌹
     </p>
+
+    <!-- Dinamik Büyüyen Sayaç Alanı -->
+    <div class="counter-box">
+        <div class="counter-title">Sinem'le Geçen Zaman</div>
+        <div class="counter-time" id="liveCounter">Hesaplanıyor...</div>
+    </div>
 </div>
 
 <!-- GitHub Ham Linki ile Reklamsız M4A Ses Altyapısı -->
@@ -319,8 +372,68 @@ const lid = document.getElementById("lid");
 const canvas = document.getElementById("heart");
 const message = document.getElementById("message");
 const music = document.getElementById("music");
+const liveCounter = document.getElementById("liveCounter");
 
 let opened = false;
+let counterInterval;
+
+// BAŞLANGIÇ ZAMANI: 23 Mayıs 2026, Saat 22:14:00
+// JavaScript'te aylar 0'dan başlar (0=Ocak, 4=Mayıs)
+const hedefTarih = new Date(2026, 4, 23, 21, 11, 0); 
+
+function dinamikZamaniSay() {
+    const simdi = new Date();
+    let farkSaniye = Math.floor((simdi - hedefTarih) / 1000);
+
+    if (farkSaniye < 0) farkSaniye = 0;
+
+    // Zaman sabitleri (Saniye cinsinden)
+    const birDakika = 60;
+    const birSaat = 3600;
+    const birGun = 86400;
+    const birHafta = 604800;
+    const birYil = 31536000;
+
+    // Birimleri hesaplama
+    const yil = Math.floor(farkSaniye / birYil);
+    let kalan = farkSaniye % birYil;
+
+    const hafta = Math.floor(kalan / birHafta);
+    kalan = kalan % birHafta;
+
+    const gun = Math.floor(kalan / birGun);
+    kalan = kalan % birGun;
+
+    const saat = Math.floor(kalan / birSaat);
+    kalan = kalan % birSaat;
+
+    const dakika = Math.floor(kalan / birDakika);
+    const saniye = kalan % birDakika;
+
+    // String oluşturma (Yalnızca zamanı gelen birimler eklenecek)
+    let sonucHTML = "";
+
+    if (farkSaniye >= birYil) {
+        sonucHTML += `${yil}<span class="counter-unit">Sene</span>`;
+    }
+    if (farkSaniye >= birHafta) {
+        sonucHTML += `${hafta}<span class="counter-unit">Hafta</span>`;
+    }
+    if (farkSaniye >= birGun) {
+        sonucHTML += `${gun}<span class="counter-unit">Gün</span>`;
+    }
+    if (farkSaniye >= birSaat) {
+        sonucHTML += `${saat}<span class="counter-unit">Saat</span>`;
+    }
+    if (farkSaniye >= birDakika) {
+        sonucHTML += `${dakika}<span class="counter-unit">Dk</span>`;
+    }
+    
+    // Saniye her durumda her zaman en sonda gösterilir
+    sonucHTML += `${saniye}<span class="counter-unit">Sn</span>`;
+
+    liveCounter.innerHTML = sonucHTML;
+}
 
 // Havai Fişek Sistem Ayarları
 let fireworks = [];
@@ -482,6 +595,10 @@ giftBox.addEventListener("click", () => {
             canvas.style.display = "block";
 
             message.style.display = "flex";
+
+            // Dinamik zamanlayıcıyı ilk kez tetikle ve her saniye güncelle
+            dinamikZamaniSay();
+            counterInterval = setInterval(dinamikZamaniSay, 1000);
 
             initHeart();
 
