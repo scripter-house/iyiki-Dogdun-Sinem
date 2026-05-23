@@ -292,7 +292,7 @@ canvas{
     </div>
 
     <div class="gift-text">
-        Sinem, kutuyu açmama yardım et. İyi kapatmışlar, açılmıyor
+        Sinem Kutuyu Açmama Yardım Et ❤️
     </div>
 
 </div>
@@ -308,14 +308,8 @@ canvas{
     </p>
 </div>
 
-<!-- Müzik -->
-<iframe
-    id="music"
-    width="0"
-    height="0"
-    frameborder="0"
-    allow="autoplay">
-</iframe>
+<!-- GitHub Ham Linki ile Reklamsız M4A Ses Altyapısı -->
+<audio id="music" src="https://raw.githubusercontent.com/scripter-house/iyiki-Dogdun-Sinem/main/ORTAM%202.0%20%20G%C3%BCnah%20Sevap%20-%20Ortam%20-%20marlon%20(youtube).m4a" preload="auto" crossorigin="anonymous"></audio>
 
 <script>
 
@@ -328,6 +322,126 @@ const music = document.getElementById("music");
 
 let opened = false;
 
+// Havai Fişek Sistem Ayarları
+let fireworks = [];
+let fireworkParticles = [];
+
+class Firework {
+    constructor(sx, sy, tx, ty) {
+        this.x = sx;
+        this.y = sy;
+        this.sx = sx;
+        this.sy = sy;
+        this.tx = tx;
+        this.ty = ty;
+        this.distanceToTarget = calculateDistance(sx, sy, tx, ty);
+        this.distanceTraveled = 0;
+        this.coordinates = [];
+        this.coordinateCount = 3;
+        while(this.coordinateCount--) {
+            this.coordinates.push([this.x, this.y]);
+        }
+        this.angle = Math.atan2(ty - sy, tx - sx);
+        this.speed = 2;
+        this.acceleration = 1.05;
+        this.brightness = randRange(50, 70);
+        this.targetRadius = 1;
+    }
+    update(index) {
+        this.coordinates.pop();
+        this.coordinates.unshift([this.x, this.y]);
+        
+        if(this.targetRadius < 8) {
+            this.targetRadius += 0.3;
+        } else {
+            this.targetRadius = 1;
+        }
+        
+        this.speed *= this.acceleration;
+        
+        let vx = Math.cos(this.angle) * this.speed;
+        let vy = Math.sin(this.angle) * this.speed;
+        this.distanceTraveled = calculateDistance(this.sx, this.sy, this.x + vx, this.y + vy);
+        
+        if(this.distanceTraveled >= this.distanceToTarget) {
+            createExplosionParticles(this.tx, this.ty);
+            fireworks.splice(index, 1);
+        } else {
+            this.x += vx;
+            this.y += vy;
+        }
+    }
+    draw(ctx) {
+        ctx.beginPath();
+        ctx.moveTo(this.coordinates[this.coordinates.length - 1][0], this.coordinates[this.coordinates.length - 1][1]);
+        ctx.lineTo(this.x, this.y);
+        ctx.strokeStyle = 'hsl(' + hue + ', 100%, ' + this.brightness + '%)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+    }
+}
+
+class FireworkParticle {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.coordinates = [];
+        this.coordinateCount = 5;
+        while(this.coordinateCount--) {
+            this.coordinates.push([this.x, this.y]);
+        }
+        this.angle = randRange(0, Math.PI * 2);
+        this.speed = randRange(1, 10);
+        this.friction = 0.95;
+        this.gravity = 1;
+        this.hue = randRange(hue - 50, hue + 50);
+        this.brightness = randRange(50, 80);
+        this.alpha = 1;
+        this.decay = randRange(0.015, 0.03);
+    }
+    update(index) {
+        this.coordinates.pop();
+        this.coordinates.unshift([this.x, this.y]);
+        this.speed *= this.friction;
+        this.x += Math.cos(this.angle) * this.speed;
+        this.y += Math.sin(this.angle) * this.speed + this.gravity;
+        this.alpha -= this.decay;
+        
+        if(this.alpha <= this.decay) {
+            fireworkParticles.splice(index, 1);
+        }
+    }
+    draw(ctx) {
+        ctx.beginPath();
+        ctx.moveTo(this.coordinates[this.coordinates.length - 1][0], this.coordinates[this.coordinates.length - 1][1]);
+        ctx.lineTo(this.x, this.y);
+        ctx.strokeStyle = 'hsla(' + this.hue + ', 100%, ' + this.brightness + '%, ' + this.alpha + ')';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+    }
+}
+
+function calculateDistance(p1x, p1y, p2x, p2y) {
+    let xDistance = p1x - p2x;
+    let yDistance = p1y - p2y;
+    return Math.sqrt(Math.pow(xDistance, 2) + Math.pow(yDistance, 2));
+}
+
+function randRange(min, max) {
+    return Math.random() * (max - min) + min;
+}
+
+function createExplosionParticles(x, y) {
+    let particleCount = 60;
+    while(particleCount--) {
+        fireworkParticles.push(new FireworkParticle(x, y));
+    }
+}
+
+let hue = 120;
+let timerTotal = 40;
+let timerTick = 0;
+
 giftBox.addEventListener("click", () => {
 
     if(opened) return;
@@ -339,9 +453,9 @@ giftBox.addEventListener("click", () => {
 
     lid.style.opacity = "0";
 
-    // Şarkı embed linkiyle 1:30'dan (90. saniye) itibaren otomatik başlar
-    music.src =
-    "https://www.youtube.com/embed/3PFrAFQZHug?autoplay=1&start=90";
+    // Şarkıyı tam olarak 2. saniyeye sarıp çalıyoruz
+    music.currentTime = 2;
+    music.play().catch(err => console.log("Oynatma engellendi: ", err));
 
     // Patlama efekti
     createExplosion();
@@ -652,6 +766,8 @@ var time = 0;
 
 var loop = function () {
 
+    hue += 0.5;
+
     var n = -Math.cos(time);
 
     pulse(
@@ -667,7 +783,7 @@ var loop = function () {
     ) * config.timeDelta;
 
     ctx.fillStyle =
-        "rgba(0,0,0,.1)";
+        "rgba(0,0,0,.15)";
 
     ctx.fillRect(
         0,
@@ -676,6 +792,31 @@ var loop = function () {
         height
     );
 
+    // Havai Fişek Güncelleme ve Çizim Mantığı
+    if(timerTick >= timerTotal) {
+        let startX = randRange(width * 0.1, width * 0.9);
+        let startY = height;
+        let targetX = randRange(width * 0.1, width * 0.9);
+        let targetY = randRange(height * 0.1, height * 0.5);
+        fireworks.push(new Firework(startX, startY, targetX, targetY));
+        timerTick = 0;
+    } else {
+        timerTick++;
+    }
+
+    let fIndex = fireworks.length;
+    while(fIndex--) {
+        fireworks[fIndex].draw(ctx);
+        fireworks[fIndex].update(fIndex);
+    }
+
+    let pIndex = fireworkParticles.length;
+    while(pIndex--) {
+        fireworkParticles[pIndex].draw(ctx);
+        fireworkParticles[pIndex].update(pIndex);
+    }
+
+    // Kalp Çizim Mantığı
     for (
         i = e.length;
         i--;
